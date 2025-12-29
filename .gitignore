@@ -1,2 +1,42 @@
-node_modules/*
-ref/*
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# IDE/Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test coverage
+coverage/
+
+# Temp files
+tmp/
+.tmp/
+*.tmp
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Project specific
+ref/
+
+# Yalc
+.yalc/
+yalc.lock

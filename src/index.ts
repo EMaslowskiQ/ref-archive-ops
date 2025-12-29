@@ -1,39 +1,53 @@
-import { ArchiveOps } from './system/util/archiveOps.ts';
-import fs from 'fs';
-import path from 'path';
+// src/index.ts
 
-const getFilesToCompress = async (srcPath: string): Promise<string[]> => {
+// Core classes
+export { ArchiveOps } from './core/archiveOps.js';
+export { ArchiveService } from './core/archiveService.js';
 
-    const srcStats = fs.statSync(srcPath);
-    if(srcStats.isFile() === true)
-        return [ path.resolve(srcPath) ];
+// Types - enums
+export {
+    CompressionLevel,
+    ArchiveOpType,
+    ProcessStatus,
+} from './types/archive.types.js';
 
-    // if a directory then get all files inside
-    const files = await fs.readdirSync(srcPath);
-    if(!files || files.length === 0)
-        return [];
+// Types - interfaces
+export type {
+    FileInfo,
+    ArchiveOpResult,
+    ProgressCallback,
+    EndCallback,
+    ArchiveOpsConfig,
+    ArchiveServiceConfig,
+    DecompressOptions,
+    CompressOptions,
+    JobHandle,
+} from './types/archive.types.js';
 
-    const result: string[] = files.map(file => { file = `${srcPath}\\${file}`; return file; });
-    return result;
-}
+// Error types
+export {
+    ArchiveErrorCode,
+    ArchiveError,
+    EncryptedArchiveError,
+    PathTraversalError,
+    ExecutableNotFoundError,
+    UnsupportedFormatError,
+    OperationInProgressError,
+    CorruptArchiveError,
+} from './types/errors.types.js';
 
-const main = async (srcPath: string, dstPath: string) => {  
-    const op = new ArchiveOps();
-    // const opResult = await op.listEntries(srcPath, (result)=>{ console.log(result); });
+// Utilities (for advanced users)
+export {
+    validateEntryPath,
+    validateAllEntries,
+    normalizePath,
+    isSafePath,
+    resolveExtractPath,
+} from './utils/pathValidation.js';
 
-    // decompress archive into temp folder
-    // const opResult = await op.decompress(srcPath,dstPath, 
-    //     (progress, message)=>{ console.log(`${progress?.toString().padStart(3, ' ') ?? -1}: ${message}`); },
-    //     (result)=>{ console.log('onEnd:\n',result); });
-
-    // compress and place zip in temp folder
-    // NOTE: files to compress need to be valid paths. (absolute preferred) they cannot be just filenames
-    const filesToCompress: string[] = await getFilesToCompress(srcPath);
-    const opResult = await op.compress(filesToCompress,dstPath+'/test.zip', 
-        (progress, message)=>{ console.log(`${progress?.toString().padStart(3, ' ') ?? -1}: ${message}`); },
-        (result)=>{ console.log('onEnd:\n',result); });
-};
-
-const sourcePath = process.argv[2];
-const tempDir = fs.mkdtempSync(path.join('./tmp', 'compressed-'));
-main(sourcePath,tempDir);
+export {
+    parseSltOutput,
+    parseSltString,
+    hasEncryptedFiles,
+    findEncryptedFile,
+} from './utils/sltParser.js';
