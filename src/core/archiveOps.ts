@@ -20,22 +20,12 @@ import {
     ExecutableNotFoundError,
     UnsupportedFormatError,
     OperationInProgressError,
-    CorruptArchiveError,
     createErrorFromExitCode,
 } from '../types/errors.types.js';
 
 import { validateAllEntries, normalizePath } from '../utils/pathValidation.js';
 import { parseSltString, hasEncryptedFiles } from '../utils/sltParser.js';
 
-//#region TYPES
-
-/** Internal state for tracking stderr output */
-interface StderrState {
-    buffer: string;
-    hasError: boolean;
-}
-
-//#endregion
 
 /**
  * ArchiveOps: Worker class for archive operations via 7za CLI.
@@ -91,7 +81,7 @@ export class ArchiveOps {
             try {
                 // 7za args: l=list, -slt=technical listing format
                 const args = ['l', '-slt', fullArchivePath];
-                const stderrState: StderrState = { buffer: '', hasError: false };
+                let stderrBuffer = '';
 
                 this.process = this.spawnProcess(args);
                 let stdoutBuffer = '';
@@ -102,8 +92,7 @@ export class ArchiveOps {
                 });
 
                 this.process.stderr.on('data', (data: Buffer) => {
-                    stderrState.buffer += data.toString();
-                    stderrState.hasError = true;
+                    stderrBuffer += data.toString();
                 });
 
                 this.process.on('error', (error: Error) => {
@@ -113,7 +102,7 @@ export class ArchiveOps {
                 this.process.on('close', (code: number | null) => {
                     const exitCode = code ?? 0;
 
-                    // Exit code 0 = success, rely on exit code not stderr
+                    // Exit code 0 = success
                     if (exitCode === 0) {
                         const files = parseSltString(stdoutBuffer);
 
@@ -132,7 +121,7 @@ export class ArchiveOps {
                         ));
                     } else {
                         this.cleanup();
-                        reject(createErrorFromExitCode(exitCode, fullArchivePath));
+                        reject(createErrorFromExitCode(exitCode, fullArchivePath, stderrBuffer));
                     }
                 });
 
@@ -194,6 +183,7 @@ export class ArchiveOps {
         return new Promise((resolve, reject) => {
             try {
                 let progress = 0;
+                let stderrBuffer = '';
 
                 // 7za args: x=extract with paths, -aoa=overwrite all, -bsp1=progress to stdout
                 const args = ['x', '-aoa', '-bsp1', '-bso0', fullArchivePath, `-o${fullTargetPath}`];
@@ -221,8 +211,8 @@ export class ArchiveOps {
                     }
                 });
 
-                this.process.stderr.on('data', () => {
-                    // Ignore stderr, rely on exit code
+                this.process.stderr.on('data', (data: Buffer) => {
+                    stderrBuffer += data.toString();
                 });
 
                 this.process.on('error', (error: Error) => {
@@ -242,7 +232,7 @@ export class ArchiveOps {
                         ));
                     } else {
                         this.cleanup();
-                        reject(createErrorFromExitCode(exitCode, fullArchivePath));
+                        reject(createErrorFromExitCode(exitCode, fullArchivePath, stderrBuffer));
                     }
                 });
 
@@ -313,6 +303,7 @@ export class ArchiveOps {
         return new Promise((resolve, reject) => {
             try {
                 let progress = 0;
+                let stderrBuffer = '';
 
                 // 7za args: a=add, -tzip=zip format, -mx=compression level, -bsp1=progress
                 const args = [
@@ -343,8 +334,8 @@ export class ArchiveOps {
                     }
                 });
 
-                this.process.stderr.on('data', () => {
-                    // Ignore stderr, rely on exit code
+                this.process.stderr.on('data', (data: Buffer) => {
+                    stderrBuffer += data.toString();
                 });
 
                 this.process.on('error', (error: Error) => {
@@ -375,7 +366,7 @@ export class ArchiveOps {
                         ));
                     } else {
                         this.cleanup();
-                        reject(createErrorFromExitCode(exitCode, fullArchivePath));
+                        reject(createErrorFromExitCode(exitCode, fullArchivePath, stderrBuffer));
                     }
                 });
 
@@ -443,6 +434,8 @@ export class ArchiveOps {
 
         return new Promise((resolve, reject) => {
             try {
+                let stderrBuffer = '';
+
                 // 7za args: u=update, -tzip=zip format
                 const args = [
                     'u',
@@ -459,8 +452,8 @@ export class ArchiveOps {
                     // Progress parsing for update is similar to compress
                 });
 
-                this.process.stderr.on('data', () => {
-                    // Ignore stderr, rely on exit code
+                this.process.stderr.on('data', (data: Buffer) => {
+                    stderrBuffer += data.toString();
                 });
 
                 this.process.on('error', (error: Error) => {
@@ -483,7 +476,7 @@ export class ArchiveOps {
                         ));
                     } else {
                         this.cleanup();
-                        reject(createErrorFromExitCode(exitCode, fullArchivePath));
+                        reject(createErrorFromExitCode(exitCode, fullArchivePath, stderrBuffer));
                     }
                 });
 
@@ -534,13 +527,14 @@ export class ArchiveOps {
             const args = ['l', '-slt', fullArchivePath];
             const proc = this.spawnProcess(args);
             let stdoutBuffer = '';
+            let stderrBuffer = '';
 
             proc.stdout.on('data', (data: Buffer) => {
                 stdoutBuffer += data.toString();
             });
 
-            proc.stderr.on('data', () => {
-                // Ignore stderr, rely on exit code
+            proc.stderr.on('data', (data: Buffer) => {
+                stderrBuffer += data.toString();
             });
 
             proc.on('error', (error: Error) => {
@@ -568,7 +562,7 @@ export class ArchiveOps {
                         exitCode,
                     });
                 } else {
-                    reject(createErrorFromExitCode(exitCode, fullArchivePath));
+                    reject(createErrorFromExitCode(exitCode, fullArchivePath, stderrBuffer));
                 }
             });
         });

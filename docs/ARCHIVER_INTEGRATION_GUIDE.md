@@ -525,7 +525,21 @@ npx tsx src/cli/runner.ts --7za="/usr/local/bin/7za" list ./test.zip
 
 ## Error Handling
 
-All errors extend `ArchiveError` with a `code` property:
+All errors extend `ArchiveError` with a `code` property and optional `details`:
+
+```typescript
+class ArchiveError extends Error {
+    code: ArchiveErrorCode;      // Error classification
+    details?: {                  // Additional context
+        archivePath?: string;    // Path to archive
+        exitCode?: number;       // 7za exit code
+        stderr?: string;         // Raw stderr output
+        // ... other context-specific fields
+    };
+}
+```
+
+### Basic Error Handling
 
 ```typescript
 import { ArchiveError, ArchiveErrorCode } from 'archive-ops';
@@ -544,9 +558,60 @@ try {
             case ArchiveErrorCode.PATH_TRAVERSAL:
                 console.error('Security: malicious archive detected');
                 break;
+            case ArchiveErrorCode.CORRUPT_ARCHIVE:
+                console.error(`Corrupt archive: ${error.message}`);
+                break;
+            case ArchiveErrorCode.PERMISSION_DENIED:
+                console.error('Permission denied');
+                break;
+            case ArchiveErrorCode.DISK_FULL:
+                console.error('Not enough disk space');
+                break;
             default:
                 console.error(`Archive error: ${error.message}`);
         }
+
+        // Access error details (stderr, exit code, etc.)
+        if (error.details) {
+            console.error('Details:', error.details);
+            // { archivePath: '...', exitCode: 2, stderr: 'CRC Failed...' }
+        }
+    }
+}
+```
+
+### Using Specific Error Classes
+
+For type-safe error handling, use the specific error classes:
+
+```typescript
+import {
+    ArchiveError,
+    EncryptedArchiveError,
+    PathTraversalError,
+    CorruptArchiveError,
+    ExecutableNotFoundError,
+    UnsupportedFormatError,
+} from 'archive-ops';
+
+try {
+    await ops.decompress('./archive.zip', './output');
+} catch (error) {
+    if (error instanceof EncryptedArchiveError) {
+        // Handle encrypted archive - error.details.archivePath available
+        showPasswordPrompt();
+    } else if (error instanceof CorruptArchiveError) {
+        // Handle corrupt archive
+        suggestRedownload();
+    } else if (error instanceof PathTraversalError) {
+        // Security issue - error.details.maliciousPath available
+        logSecurityEvent(error);
+    } else if (error instanceof ExecutableNotFoundError) {
+        // 7za not installed - error.details.executablePath available
+        show7zipInstallInstructions();
+    } else if (error instanceof ArchiveError) {
+        // Generic archive error - check error.code for specifics
+        console.error(`Error [${error.code}]: ${error.message}`);
     }
 }
 ```
@@ -561,9 +626,65 @@ try {
 | `PATH_TRAVERSAL` | Malicious paths detected |
 | `UNSUPPORTED_FORMAT` | Not a .zip file |
 | `EMPTY_ARCHIVE` | Archive has no files |
-| `CORRUPT_ARCHIVE` | Archive is damaged |
+| `CORRUPT_ARCHIVE` | Archive is damaged (CRC failed, headers error, etc.) |
 | `EXECUTABLE_NOT_FOUND` | 7za not found at specified path |
 | `OPERATION_IN_PROGRESS` | ArchiveOps instance busy |
-| `FATAL_ERROR` | 7za exit code 2 |
+| `PERMISSION_DENIED` | Access denied to file or directory |
+| `DISK_FULL` | Not enough disk space |
+| `FILE_IN_USE` | File is locked by another process |
+| `FATAL_ERROR` | 7za exit code 2 (generic) |
 | `COMMAND_LINE_ERROR` | 7za exit code 7 |
 | `OUT_OF_MEMORY` | 7za exit code 8 |
+| `USER_ABORTED` | Operation was cancelled |
+
+### Specific Error Messages
+
+The library parses 7za stderr output to provide specific error messages:
+
+| Condition | Error Code | Message |
+|-----------|------------|---------|
+| CRC check failed | `CORRUPT_ARCHIVE` | "CRC check failed - archive is corrupted" |
+| Data error | `CORRUPT_ARCHIVE` | "Data error - archive is corrupted" |
+| Invalid headers | `CORRUPT_ARCHIVE` | "Invalid archive headers - archive is corrupted" |
+| Truncated file | `CORRUPT_ARCHIVE` | "Unexpected end of archive - file may be truncated" |
+| Not an archive | `CORRUPT_ARCHIVE` | "File is not a valid archive" |
+| Access denied | `PERMISSION_DENIED` | "Access denied - permission error" |
+| File locked | `FILE_IN_USE` | "File is in use by another process" |
+| Disk full | `DISK_FULL` | "Not enough disk space" |
+| Wrong password | `ENCRYPTED_ARCHIVE` | "Wrong password for encrypted archive" |
+
+If no specific pattern is matched, the raw stderr output (if < 200 chars) is appended to the default error message.
+
+### Logging Errors for Debugging
+
+For debugging or logging, capture the full error context:
+
+```typescript
+try {
+    await ops.decompress('./archive.zip', './output');
+} catch (error) {
+    if (error instanceof ArchiveError) {
+        // Log full error for debugging
+        console.error({
+            name: error.name,
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            stack: error.stack,
+        });
+
+        // Example output:
+        // {
+        //   name: 'ArchiveError',
+        //   code: 'CORRUPT_ARCHIVE',
+        //   message: 'CRC check failed - archive is corrupted',
+        //   details: {
+        //     archivePath: '/path/to/archive.zip',
+        //     exitCode: 2,
+        //     stderr: 'ERROR: CRC Failed : filename.txt'
+        //   },
+        //   stack: 'ArchiveError: CRC check failed...'
+        // }
+    }
+}
+```

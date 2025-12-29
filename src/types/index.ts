@@ -31,4 +31,5 @@ export {
     CorruptArchiveError,
     exitCodeToErrorCode,
     createErrorFromExitCode,
+    parseStderrForError,
 } from './errors.types.js';
