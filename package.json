@@ -1,20 +1,41 @@
 {
+  "name": "archive-ops",
+  "version": "1.2.0",
   "type": "module",
-  "name": "deflate64",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "TypeScript library for archive operations via 7za CLI",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "build:clean": "rimraf dist && tsc",
+    "typecheck": "tsc --noEmit",
+    "test:cli": "tsx src/cli/runner.ts"
   },
-  "author": "",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "archive",
+    "zip",
+    "7zip",
+    "7za",
+    "compression"
+  ],
   "license": "ISC",
-  "dependencies": {
-    "node-stream-zip": "^1.15.0"
-  },
   "devDependencies": {
     "@types/node": "^20.14.9",
-    "ts-node": "^10.9.2",
+    "rimraf": "^5.0.0",
+    "tsx": "^4.7.0",
     "typescript": "^5.5.2"
   }
 }
