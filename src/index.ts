@@ -2,6 +2,7 @@
 
 // Core classes
 export { ArchiveOps } from './core/archiveOps.js';
+export { ArchiveService } from './core/archiveService.js';
 
 // Types - enums
 export {

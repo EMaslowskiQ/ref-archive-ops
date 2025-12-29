@@ -36,3 +36,7 @@ tmp/
 
 # Project specific
 ref/
+
+# Yalc
+.yalc/
+yalc.lock

@@ -182,7 +182,7 @@ export function findEncryptedFile(files: FileInfo[]): FileInfo | undefined {
 
 /**
  * Converts raw SLT entry to FileInfo.
- * Returns null if entry is invalid (e.g., directory or missing path).
+ * Returns null if entry is invalid (e.g., directory, missing path, or archive metadata).
  */
 function convertToFileInfo(entry: SltFileEntry): FileInfo | null {
     // Skip entries without a path
@@ -190,8 +190,14 @@ function convertToFileInfo(entry: SltFileEntry): FileInfo | null {
         return null;
     }
 
-    // Skip directories (they have 'D' in attributes or size is undefined/0 with no packed size)
-    if (entry.attributes?.includes('D')) {
+    // Skip archive metadata entries (they have no Attributes field)
+    // The first entry in -slt output is the archive itself, not a file inside it
+    if (entry.attributes === undefined) {
+        return null;
+    }
+
+    // Skip directories (they have 'D' in attributes)
+    if (entry.attributes.includes('D')) {
         return null;
     }
 

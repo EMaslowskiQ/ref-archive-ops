@@ -19,7 +19,9 @@
     "build": "tsc",
     "build:clean": "rimraf dist && tsc",
     "typecheck": "tsc --noEmit",
-    "test:cli": "tsx src/cli/runner.ts"
+    "test:cli": "tsx src/cli/runner.ts",
+    "yalc:publish": "npm run build && yalc publish",
+    "yalc:push": "npm run build && yalc push"
   },
   "engines": {
     "node": ">=18.0.0"

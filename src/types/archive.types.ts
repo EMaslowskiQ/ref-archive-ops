@@ -95,12 +95,16 @@ export interface ArchiveServiceConfig {
 export interface DecompressOptions {
     /** Specific files to extract (extracts all if not provided) */
     fileList?: string[];
+    /** Progress callback */
+    onProgress?: ProgressCallback;
 }
 
 /** Options for compress operation */
 export interface CompressOptions {
     /** Compression level (defaults to FAST) */
     level?: CompressionLevel;
+    /** Progress callback */
+    onProgress?: ProgressCallback;
 }
 
 //#endregion
