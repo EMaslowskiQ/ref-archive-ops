@@ -1,6 +1,6 @@
 {
   "name": "archive-ops",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "type": "module",
   "description": "TypeScript library for archive operations via 7za CLI",
   "main": "./dist/index.js",
@@ -20,8 +20,7 @@
     "build:clean": "rimraf dist && tsc",
     "typecheck": "tsc --noEmit",
     "test:cli": "tsx src/cli/runner.ts",
-    "yalc:publish": "npm run build && yalc publish",
-    "yalc:push": "npm run build && yalc push"
+    "prepare": "npm run build"
   },
   "engines": {
     "node": ">=18.0.0"

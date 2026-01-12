@@ -20,11 +20,23 @@ A TypeScript library for archive operations via 7za CLI with security hardening,
 ## Installation
 
 ```bash
-# Via yalc (local development)
-yalc add archive-ops
+# Via git reference (recommended for private/local repos)
+npm install git+https://github.com/your-org/archive-ops.git
+npm install git+https://github.com/your-org/archive-ops.git#branch-name
+npm install git+https://github.com/your-org/archive-ops.git#v1.2.0
 
 # Via npm (when published)
 npm install archive-ops
+```
+
+In `package.json`, git dependencies appear as:
+
+```json
+{
+  "dependencies": {
+    "archive-ops": "git+https://github.com/your-org/archive-ops.git#main"
+  }
+}
 ```
 
 ---
