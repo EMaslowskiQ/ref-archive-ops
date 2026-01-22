@@ -1,6 +1,6 @@
 {
-  "name": "archive-ops",
-  "version": "1.2.1",
+  "name": "dpo-archive-ops",
+  "version": "1.2.2",
   "type": "module",
   "description": "TypeScript library for archive operations via 7za CLI",
   "main": "./dist/index.js",
