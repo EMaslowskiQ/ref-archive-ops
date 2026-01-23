@@ -1,8 +1,12 @@
 {
   "name": "dpo-archive-ops",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "type": "module",
   "description": "TypeScript library for archive operations via 7za CLI",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EMaslowskiQ/dpo-archive-ops.git"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {

@@ -37,6 +37,6 @@ tmp/
 # Project specific
 ref/
 
-/*.md
+/CLAUDE.md
 .claude/*
 *-cwd
